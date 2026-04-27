@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+
+  <title>Adaptive Low-Power LDPC Decoder on FPGA | Final Year Project Portfolio</title>
+  <meta name="description" content="Academic portfolio for the final year project: Adaptive Low-Power LDPC Decoder on FPGA using Early Termination and Optimized Min-Sum Algorithm. Covers problem statement, methodology, FPGA design, and outcomes." />
+  <meta name="keywords" content="LDPC decoder, FPGA, low-power design, Min-Sum algorithm, early termination, digital design, error correction, Verilog, VLSI, final year project, digital business management" />
+  <meta name="author" content="Group Project – Digital Business Management" />
+  <meta name="robots" content="index, follow" />
+
+  <meta property="og:title" content="Adaptive Low-Power LDPC Decoder on FPGA" />
+  <meta property="og:description" content="Final year project portfolio presenting an energy-efficient LDPC decoder design on FPGA using Early Termination and Optimized Min-Sum Algorithm." />
+  <meta property="og:type" content="website" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=Nunito+Sans:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --navy:      #060D1F;
+      --navy-mid:  #0750e4;
+      --navy-card: #0F2044;
+      --blue:      #1A56DB;
+      --blue-lt:   #3B82F6;   
+      --cyan:      #ea9b9b;
+      --gold:      #D4A843;
+      --white:     #F0F4FF;
+      --muted:     #8A9BC4;
+      --border:    rgb(0, 0, 0);
+      --ff-head:   'Cormorant Garamond', serif;
+      --ff-mono:   'IBM Plex Mono', monospace;
+      --ff-body:   'Nunito Sans', sans-serif;
+      --radius:    6px;
+      --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+    body {
+      background: var(--navy);
+      color: var(--white);
+      font-family: var(--ff-body);
+      line-height: 1.75;
+      overflow-x: hidden;
+    }
+    ::selection { background: var(--blue); color: #fff; }
+    img { max-width: 100%; display: block; }
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(26,86,219,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(26,86,219,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5%;
+      height: 64px;
+      background: rgba(6,13,31,0.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      font-family: var(--ff-mono);
+      font-size: 0.78rem;
+      color: var(--cyan);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      transition: color var(--transition);
+    }
+    .nav-links a:hover { color: var(--white); text-decoration: none; }
+    .nav-badge {
+      font-family: var(--ff-mono);
+      font-size: 0.68rem;
+      background: var(--blue);
+      color: #fff;
+      padding: 3px 10px;
+      border-radius: 2px;
+      letter-spacing: 0.06em;
+    }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--white); border-radius: 2px; transition: all 0.3s ease; }
+    .hamburger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.active span:nth-child(2) { opacity: 0; }
+    .hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    #hero {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 100px 6% 60px;
+    }
+    .hero-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid var(--border);
+      background: rgba(26,86,219,0.1);
+      padding: 6px 16px;
+      border-radius: 2px;
+      font-family: var(--ff-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 2rem;
+      animation: fadeUp 0.6s ease both;
+    }
+    .hero-chip::before { content: '●'; font-size: 0.5rem; color: var(--cyan); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    h1.hero-title {
+      font-family: var(--ff-head);
+      font-size: clamp(2.2rem, 5.5vw, 4.2rem);
+      font-weight: 700;
+      line-height: 1.15;
+      max-width: 900px;
+      margin-bottom: 1.25rem;
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+    h1.hero-title span { color: var(--cyan); }
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 640px;
+      margin-bottom: 2.5rem;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+    .hero-cta {
+      display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp 0.7s 0.3s ease both;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 28px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: var(--radius);
+      transition: all var(--transition);
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: var(--blue-lt); text-decoration: none; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,86,219,0.45); }
+    .btn-outline { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); }
+    .btn-outline:hover { background: rgba(6,182,212,0.1); text-decoration: none; transform: translateY(-2px); }
+    .hero-stats {
+      display: flex; gap: 3rem; flex-wrap: wrap; justify-content: center;
+      margin-top: 4rem;
+      animation: fadeUp 0.7s 0.4s ease both;
+    }
+    .stat { text-align: center; }
+    .stat-num {
+      font-family: var(--ff-head);
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--cyan);
+      display: block;
+    }
+    .stat-label { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+    section { position: relative; z-index: 1; padding: 90px 6%; scroll-margin-top: 64px; }
+    section:nth-child(even) { background: rgba(13,27,56,0.5); }
+    .section-tag {
+      font-family: var(--ff-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 0.5rem;
+    }
+    h2.section-title {
+      font-family: var(--ff-head);
+      font-size: clamp(1.9rem, 3.5vw, 2.8rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 0.6rem;
+    }
+    .section-line {
+      width: 48px; height: 3px;
+      background: linear-gradient(90deg, var(--blue), var(--cyan));
+      margin-bottom: 2.5rem;
+    }
+    .section-intro { color: var(--muted); max-width: 680px; margin-bottom: 3rem; }
+    .card {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+    }
+    .card:hover {
+      border-color: var(--blue-lt);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(26,86,219,0.2);
+    }
+    .card-icon {
+      width: 44px; height: 44px;
+      background: rgba(26,86,219,0.15);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+    }
+    .card h3 { font-family: var(--ff-head); font-size: 1.25rem; margin-bottom: 0.5rem; }
+    .card p { color: var(--muted); font-size: 0.92rem; line-height: 1.7; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
+    .problem-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+    .problem-text p { color: var(--muted); margin-bottom: 1rem; }
+    .problem-highlight {
+      background: rgba(26,86,219,0.08);
+      border-left: 3px solid var(--cyan);
+      padding: 1.25rem 1.5rem;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      margin-top: 1.5rem;
+      font-size: 0.95rem;
+      color: var(--white);
+      font-style: italic;
+    }
+    .challenges-list { list-style: none; }
+    .challenges-list li {
+      display: flex; gap: 1rem; align-items: flex-start;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.93rem; color: var(--muted);
+    }
+    .challenges-list li:last-child { border-bottom: none; }
+    .challenge-icon { color: var(--gold); font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+    .objective-item {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 1.25rem;
+      align-items: start;
+      padding: 1.5rem;
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: all var(--transition);
+    }
+    .objective-item:hover { border-color: var(--blue-lt); transform: translateX(6px); }
+    .obj-num {
+      font-family: var(--ff-head);
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--blue);
+      opacity: 0.6;
+      line-height: 1;
+    }
+    .obj-content h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .obj-content p { font-size: 0.88rem; color: var(--muted); }
+    .objectives-grid { display: flex; flex-direction: column; gap: 1rem; }
+    .solution-arch {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .arch-diagram {
+      display: flex; align-items: center; justify-content: center;
+      flex-wrap: wrap; gap: 0;
+      margin: 1.5rem 0;
+    }
+    .arch-block {
+      background: rgba(26,86,219,0.15);
+      border: 1px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 0.75rem 1.25rem;
+      font-family: var(--ff-mono);
+      font-size: 0.75rem;
+      text-align: center;
+      min-width: 120px;
+    }
+    .arch-arrow { color: var(--cyan); font-size: 1.2rem; padding: 0 0.5rem; }
+    .tech-tags { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
+    .tag {
+      font-family: var(--ff-mono);
+      font-size: 0.7rem;
+      padding: 4px 12px;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+      color: var(--cyan);
+      background: rgba(6,182,212,0.06);
+    }
+    .timeline { position: relative; padding-left: 2.5rem; }
+    .timeline::before {
+      content: '';
+      position: absolute; left: 10px; top: 8px; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--blue), transparent);
+    }
+    .timeline-item { position: relative; margin-bottom: 2.5rem; }
+    .timeline-dot {
+      position: absolute; left: -2.5rem; top: 4px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--navy);
+      border: 2px solid var(--blue);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .timeline-dot::after {
+      content: '';
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--cyan);
+    }
+    .timeline-phase {
+      font-family: var(--ff-mono);
+      font-size: 0.68rem;
+      color: var(--cyan);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.2rem;
+    }
+    .timeline-item h3 { font-family: var(--ff-head); font-size: 1.2rem; margin-bottom: 0.4rem; }
+    .timeline-item p { color: var(--muted); font-size: 0.9rem; }
+    .media-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .media-card {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .media-placeholder {
+      height: 220px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0.75rem;
+      background: rgba(26,86,219,0.06);
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .media-placeholder .icon { font-size: 2.5rem; }
+    .media-info { padding: 1.25rem; }
+    .media-info h3 { font-size: 1rem; margin-bottom: 0.4rem; }
+    .media-info p { font-size: 0.82rem; color: var(--muted); margin-bottom: 1rem; }
+    .achievement-card {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      text-align: center;
+      transition: all var(--transition);
+    }
+    .achievement-card:hover { border-color: var(--gold); transform: translateY(-4px); }
+    .achievement-num {
+      font-family: var(--ff-head);
+      font-size: 2.8rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--blue-lt), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: block; margin-bottom: 0.4rem;
+    }
+    .achievement-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .achievement-card p { font-size: 0.82rem; color: var(--muted); }
+    .scope-item {
+      display: flex; gap: 1.25rem;
+      padding: 1.5rem;
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      align-items: flex-start;
+      transition: all var(--transition);
+    }
+    .scope-item:hover { border-color: var(--blue-lt); }
+    .scope-num {
+      font-family: var(--ff-mono);
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--blue);
+      opacity: 0.5;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .scope-content h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .scope-content p { font-size: 0.88rem; color: var(--muted); }
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+    .team-card {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      text-align: center;
+      transition: all var(--transition);
+    }
+    .team-card:hover { border-color: var(--cyan); transform: translateY(-4px); }
+    .team-avatar {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--ff-head);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+      margin: 0 auto 1.25rem;
+      border: 2px solid var(--border);
+    }
+    .team-card h3 { font-family: var(--ff-head); font-size: 1.25rem; margin-bottom: 0.25rem; }
+    .team-role {
+      font-family: var(--ff-mono);
+      font-size: 0.72rem;
+      color: var(--cyan);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .team-id { font-size: 0.82rem; color: var(--muted); }
+    .guide-card { background: rgba(212,168,67,0.06); border-color: rgba(212,168,67,0.3); }
+    .guide-card:hover { border-color: var(--gold); }
+    .guide-label {
+      font-family: var(--ff-mono);
+      font-size: 0.65rem;
+      color: var(--gold);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border: 1px solid rgba(212,168,67,0.3);
+      padding: 2px 8px; border-radius: 2px; display: inline-block; margin-bottom: 0.5rem;
+    }
+    .ref-list { list-style: none; }
+    .ref-item {
+      display: flex; gap: 1.25rem;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem; color: var(--muted);
+      align-items: flex-start;
+    }
+    .ref-item:last-child { border-bottom: none; }
+    .ref-num {
+      font-family: var(--ff-mono);
+      font-size: 0.75rem;
+      color: var(--cyan);
+      flex-shrink: 0;
+      min-width: 28px;
+    }
+    .ref-item span { font-style: italic; }
+    footer {
+      position: relative; z-index: 1;
+      padding: 2.5rem 6%;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-brand { font-family: var(--ff-mono); font-size: 0.75rem; color: var(--muted); }
+    .footer-mark { font-size: 0.78rem; color: var(--muted); text-align: right; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .reveal {
+      opacity: 0; transform: translateY(32px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    @media (max-width: 768px) {
+      nav { padding: 0 4%; }
+      .nav-links { display: none; flex-direction: column; position: absolute; top: 64px; left: 0; right: 0; background: rgba(6,13,31,0.97); padding: 1.5rem; gap: 1rem; border-bottom: 1px solid var(--border); }
+      .nav-links.open { display: flex; }
+      .hamburger { display: flex; }
+      .nav-badge { display: none; }
+      section { padding: 60px 5%; }
+      .problem-layout { grid-template-columns: 1fr; }
+      .media-grid { grid-template-columns: 1fr; }
+      .arch-diagram { flex-direction: column; }
+      .arch-arrow { transform: rotate(90deg); }
+      footer { flex-direction: column; text-align: center; }
+      .footer-mark { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-brand">LDPC · FPGA · 2026</div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#intro">Intro</a></li>
+      <li><a href="#problem">Problem</a></li>
+      <li><a href="#objectives">Objectives</a></li>
+      <li><a href="#solution">Solution</a></li>
+      <li><a href="#methodology">Method</a></li>
+      <li><a href="#presentation">Slides</a></li>
+      <li><a href="#achievements">Results</a></li>
+      <li><a href="#scope">Future</a></li>
+      <li><a href="#team">Team</a></li>
+      <li><a href="#references">Refs</a></li>
+    </ul>
+    <span class="nav-badge">DBM · Term Project</span>
+    <div class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
+
+  <section id="hero">
+    <div class="hero-chip">Final Year Project · Digital Business Management</div>
+    <h1 class="hero-title">
+      Adaptive Low-Power <span>LDPC Decoder</span><br />on FPGA
+    </h1>
+    <p class="hero-sub">
+      Using Early Termination &amp; Optimized Min-Sum Algorithm to achieve energy-efficient, high-throughput error correction for next-generation communication systems.
+    </p>
+    <div class="hero-cta">
+      <a href="#solution" class="btn btn-primary">Explore Project</a>
+      <a href="#presentation" class="btn btn-outline">View Presentation</a>
+
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num">~40%</span><span class="stat-label">Power Reduction</span></div>
+      <div class="stat"><span class="stat-num">FPGA</span><span class="stat-label">Implementation</span></div>
+      <div class="stat"><span class="stat-num">Min-Sum</span><span class="stat-label">Algorithm</span></div>
+      <div class="stat"><span class="stat-num">3</span><span class="stat-label">Team Members</span></div>
+    </div>
+  </section>
+
+  <section id="intro">
+    <div class="reveal">
+      <p class="section-tag">01 · Introduction</p>
+      <h2 class="section-title">Project Overview</h2>
+      <div class="section-line"></div>
+      <p class="section-intro">
+        The rapid growth of wireless communication systems such as 4G LTE, 5G NR, and satellite networks has increased the need for fast, reliable, and energy-efficient data transmission. Low-Density Parity-Check (LDPC) codes are widely used for error correction because of their excellent performance and near Shannon-limit efficiency.
+        <br><br>
+        However, conventional LDPC decoders require multiple iterations, leading to high hardware complexity and power consumption. This project presents an Adaptive Low-Power LDPC Decoder on FPGA using Early Termination and an Optimized Min-Sum Algorithm to reduce power usage while maintaining decoding accuracy and high performance.
+     </p>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-icon">📡</div>
+          <h3>Context</h3>
+          <p>LDPC codes are widely used in modern wireless, 5G, and satellite communication systems for high-performance forward error correction and reliable data transmission.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">⚡</div>
+          <h3>The Challenge</h3>
+          <p>Conventional iterative LDPC decoders execute fixed decoding iterations, leading to unnecessary power consumption, increased latency, and hardware overhead.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🔧</div>
+          <h3>Our Approach</h3>
+          <p>The proposed design combines Early Termination with an Optimized Min-Sum Algorithm to reduce iterations, lower power usage, and maintain efficient decoding performance.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="problem">
+    <div class="reveal">
+      <p class="section-tag">02 · Problem Statement</p>
+      <h2 class="section-title">The Core Problem</h2>
+      <div class="section-line"></div>
+      <div class="problem-layout">
+        <div class="problem-text">
+          <p>With the rapid proliferation of high-data-rate wireless systems, the demand for efficient channel coding has intensified. LDPC decoders, while capable of near Shannon-limit performance, are computationally intensive and power-hungry when deployed on hardware — particularly when using the standard Belief Propagation (BP) algorithm with a fixed iteration count.</p>
+          <p>In resource-constrained edge devices, IoT sensors, and battery-powered terminals, this power inefficiency represents a critical bottleneck. Existing hardware implementations either compromise on error-correction performance or fail to adapt their computation to signal quality.</p>
+          <div class="problem-highlight">
+            "How can we design an FPGA-based LDPC decoder that dynamically adapts its computational effort based on the channel condition, achieving significant power savings while maintaining BER performance?"
+          </div>
+        </div>
+        <div>
+          <ul class="challenges-list">
+            <li><span class="challenge-icon">⚠</span><div><strong>Fixed Iteration Overhead</strong><br />Traditional decoders execute all iterations even when the codeword has already converged, consuming unnecessary clock cycles and energy.</div></li>
+            <li><span class="challenge-icon">⚠</span><div><strong>BP Algorithm Complexity</strong><br />The Belief Propagation algorithm involves logarithmic and hyperbolic functions that are expensive to implement in hardware logic.</div></li>
+            <li><span class="challenge-icon">⚠</span><div><strong>Scalability on FPGA</strong><br />Fitting large parity-check matrices and variable/check node arrays within limited FPGA LUT and memory resources is a significant design constraint.</div></li>
+            <li><span class="challenge-icon">⚠</span><div><strong>Throughput vs Power Tradeoff</strong><br />Reducing power by limiting parallelism directly impacts decoding throughput — a careful architectural balance must be maintained.</div></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+ <section id="objectives">
+  <div class="reveal">
+    <p class="section-tag">03 · Objectives</p>
+    <h2 class="section-title">Project Objectives</h2>
+    <div class="section-line"></div>
+    <p class="section-intro">Six key objectives focused on designing, optimizing, and evaluating the proposed adaptive LDPC decoder system.</p>
+    <div class="objectives-grid">
+      <div class="objective-item">
+        <div class="obj-num">01</div>
+        <div class="obj-content">
+          <h3>Design FPGA-Based LDPC Decoder</h3>
+          <p>Develop and implement an efficient LDPC decoder architecture on FPGA using Verilog/VHDL.</p>
+        </div>
+      </div>
+      <div class="objective-item">
+        <div class="obj-num">02</div>
+        <div class="obj-content">
+          <h3>Apply Optimized Min-Sum Algorithm</h3>
+          <p>Use the Min-Sum algorithm to reduce decoding complexity and simplify hardware implementation.</p>
+        </div>
+      </div>
+      <div class="objective-item">
+        <div class="obj-num">03</div>
+        <div class="obj-content">
+          <h3>Integrate Early Termination</h3>
+          <p>Stop unnecessary decoding iterations once all parity checks are satisfied.</p>
+        </div>
+      </div>
+      <div class="objective-item">
+        <div class="obj-num">04</div>
+        <div class="obj-content">
+          <h3>Reduce Power Consumption</h3>
+          <p>Measure and compare power usage before and after applying Early Termination logic.</p>
+        </div>
+      </div>
+      <div class="objective-item">
+        <div class="obj-num">05</div>
+        <div class="obj-content">
+          <h3>Evaluate BER Performance</h3>
+          <p>Analyze Bit Error Rate performance under AWGN channel conditions.</p>
+        </div>
+      </div>
+      <div class="objective-item">
+        <div class="obj-num">06</div>
+        <div class="obj-content">
+          <h3>Analyze Resource Utilization</h3>
+          <p>Study LUT, flip-flop, BRAM, and DSP usage for hardware feasibility.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+  <section id="solution">
+    <div class="reveal">
+      <p class="section-tag">04 · Solution / Concept</p>
+      <h2 class="section-title">Proposed Solution</h2>
+      <div class="section-line"></div>
+      <p class="section-intro">An adaptive, hardware-efficient LDPC decoder combining the Min-Sum Algorithm for low-complexity check-node computation with an Early Termination unit that monitors syndrome checks after each iteration.</p>
+      <div class="solution-arch">
+        <p style="font-family: var(--ff-mono); font-size: 0.75rem; color: var(--muted); margin-bottom: 1.5rem; letter-spacing: 0.08em;">DECODER PIPELINE ARCHITECTURE</p>
+        <div class="arch-diagram">
+          <div class="arch-block">Received<br/>LLR Input</div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-block">Variable Node<br/>Update (VNU)</div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-block">Check Node<br/>Min-Sum (CNU)</div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-block">Early<br/>Termination<br/>Check</div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-block">Hard Decision<br/>Output</div>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--muted); margin-top: 1rem;">If syndrome passes (all parity checks = 0) → terminate. Else → loop back to VNU for next iteration.</p>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-icon">🧮</div><h3>Optimized Min-Sum Algorithm</h3><p>The check node update replaces tanh-based BP computations with min-operations, drastically reducing multiplier usage. An offset factor corrects the inherent approximation error, recovering near-BP BER performance.</p><div class="tech-tags"><span class="tag">Offset Min-Sum</span><span class="tag">LUT-efficient CNU</span><span class="tag">Quantized LLRs</span></div></div>
+        <div class="card"><div class="card-icon">🛑</div><h3>Early Termination Unit</h3><p>After each iteration, the decoder checks the syndrome vector (H × ĉ mod 2). If all parity checks are satisfied, decoding is declared successful and the pipeline is gated — stopping unnecessary clock-cycle consumption.</p><div class="tech-tags"><span class="tag">Syndrome Check</span><span class="tag">Clock Gating</span><span class="tag">Adaptive Iteration</span></div></div>
+        <div class="card"><div class="card-icon">🖥</div><h3>FPGA Hardware Platform</h3><p>The decoder is synthesized and implemented on a Xilinx/Intel FPGA target. RTL design in Verilog, simulation in ModelSim/Vivado, and power analysis using Vivado Power Estimator.</p><div class="tech-tags"><span class="tag">Verilog RTL</span><span class="tag">Vivado/Quartus</span><span class="tag">Xilinx / Intel FPGA</span></div></div>
+        <div class="card"><div class="card-icon">📐</div><h3>Parity Check Matrix Design</h3><p>A structured quasi-cyclic LDPC code with configurable code rate and block length is used, allowing the decoder to be parameterized for different communication standards.</p><div class="tech-tags"><span class="tag">QC-LDPC</span><span class="tag">BRAM Storage</span><span class="tag">Configurable Rate</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="methodology">
+    <div class="reveal">
+      <p class="section-tag">05 · Methodology</p>
+      <h2 class="section-title">Research &amp; Design Methodology</h2>
+      <div class="section-line"></div>
+      <p class="section-intro">A structured V-model hardware development process was followed — from specification through verification.</p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
+        <div class="timeline">
+          <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-phase">Phase 1</div><h3>Literature Survey &amp; Code Selection</h3><p>Study of LDPC decoding algorithms, BER bounds, and hardware survey of existing FPGA implementations. Selection of IEEE 802.11n LDPC code parameters.</p></div>
+          <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-phase">Phase 2</div><h3>Algorithm-Level MATLAB Simulation</h3><p>Floating-point MATLAB simulation of Belief Propagation and Min-Sum decoders over AWGN channel to establish reference BER curves and measure ET iteration savings.</p></div>
+          <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-phase">Phase 3</div><h3>Fixed-Point Quantization Analysis</h3><p>Word-length optimization for LLR quantization (5–6 bits) and message quantization to balance hardware cost against BER degradation.</p></div>
+        </div>
+        <div class="timeline">
+          <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-phase">Phase 4</div><h3>RTL Design in Verilog</h3><p>Hierarchical RTL design of VNU, CNU, syndrome checker, and controller. Modular design enables easy iteration count configuration and ET enable/disable control.</p></div>
+          <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-phase">Phase 5</div><h3>Functional Simulation &amp; Verification</h3><p>Testbench-driven simulation in ModelSim/Vivado Simulator. Frame-level BER measurements verified against MATLAB reference. Waveform analysis for timing correctness.</p></div>
+          <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-phase">Phase 6</div><h3>FPGA Synthesis &amp; Power Analysis</h3><p>Synthesis, placement, and routing on target FPGA. Power report comparison between baseline (no ET) and proposed (with ET) to quantify dynamic power savings.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="presentation">
+    
+   <section id="presentation">
+  <div class="reveal">
+    <p class="section-tag">06 · Project Presentation</p>
+    <h2 class="section-title">Presentation &amp; Media</h2>
+    <div class="section-line"></div>
+    <p class="section-intro">Access the project slide deck and demonstration video below.</p>
+    
+    <div class="media-grid">
+      <div class="media-card">
+        <div class="media-placeholder" style="height: auto; aspect-ratio: 16 / 9; padding: 0; overflow: hidden; background: #000;">
+          <iframe 
+            src="images\presentation.pptx" 
+            frameborder="0" 
+            width="100%" 
+            height="100%" 
+            allowfullscreen="true" 
+            mozallowfullscreen="true" 
+            webkitallowfullscreen="true">
+          </iframe>
+        </div>
+        </div>
+        </div>
+        </div>
+        </section>
+        
+
+  <section id="achievements">
+  <div class="reveal">
+    <p class="section-tag">07 · Achievements &amp; Outcomes</p>
+    <h2 class="section-title">Key Results</h2>
+    <div class="section-line"></div>
+
+    <p class="section-intro">Measured outcomes from simulation, synthesis, and real-time FPGA implementation of the proposed Adaptive Low-Power LDPC Decoder.</p>
+
+    <div class="grid-3" style="margin-bottom:2.5rem;">
+      <div class="achievement-card">
+        <span class="achievement-num">~40%</span>
+        <h3>Power Reduction</h3>
+        <p>Dynamic power reduced using Early Termination logic.</p>
+      </div>
+      <div class="achievement-card">
+        <span class="achievement-num">3.2×</span>
+        <h3>Iteration Savings</h3>
+        <p>Average decoding iterations reduced at high SNR.</p>
+      </div>
+      <div class="achievement-card">
+        <span class="achievement-num">FPGA</span>
+        <h3>Hardware Verified</h3>
+        <p>Successfully tested on Spartan FPGA board.</p>
+      </div>
+    </div>
+
+    <div class="card" style="text-align:center; max-width:850px; margin:0 auto;">
+      <h3 style="margin-bottom:1.5rem;">FPGA Hardware Implementation</h3>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <img src="images/fpga1.jpeg" alt="FPGA Board View 1" style="width:100%; border-radius:8px; border:1px solid var(--border); box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+        <img src="images/fpga2.jpeg" alt="FPGA Board View 2" style="width:100%; border-radius:8px; border:1px solid var(--border); box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+        <img src="images/fpga3.jpeg" alt="FPGA Board View 3" style="width:100%; border-radius:8px; border:1px solid var(--border); box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+        <img src="images/fpga4.jpeg" alt="FPGA Board View 4" style="width:100%; border-radius:8px; border:1px solid var(--border); box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+      </div>
+
+      <p style="margin-top:1rem; color:var(--muted); font-size:0.9rem; max-width:650px; margin-left:auto; margin-right:auto;">
+        Real-time **Xilinx Spartan-6** FPGA development board used for implementation, synthesis validation, and hardware testing of the proposed LDPC decoder system.
+      </p>
+    </div>
+
+    <div class="card" style="border-color: rgba(6,182,212,0.3); margin-top: 2.5rem;">
+      <h3 style="margin-bottom:0.75rem;">Learning Outcomes</h3>
+      <div class="grid-2" style="margin-top:0.5rem;">
+        <div>
+          <p style="color:var(--muted); font-size:0.88rem;">✔ Deep understanding of LDPC code structure, Tanner graphs, and iterative decoding</p>
+          <p style="color:var(--muted); font-size:0.88rem; margin-top:0.5rem;">✔ Hands-on RTL design, synthesis, and timing closure on FPGA</p>
+          <p style="color:var(--muted); font-size:0.88rem; margin-top:0.5rem;">✔ Fixed-point arithmetic analysis and quantization impact assessment</p>
+        </div>
+        <div>
+          <p style="color:var(--muted); font-size:0.88rem;">✔ Power estimation methodologies for digital hardware design</p>
+          <p style="color:var(--muted); font-size:0.88rem; margin-top:0.5rem;">✔ Algorithm-to-hardware mapping and design space exploration</p>
+          <p style="color:var(--muted); font-size:0.88rem; margin-top:0.5rem;">✔ Team-based project management, documentation, and technical presentation skills</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Member Achievements -->
+    <div style="margin-top: 2.5rem;">
+      <h3 style="font-family: var(--ff-head); font-size: 1.5rem; margin-bottom: 0.5rem;">Team Members</h3>
+      <div class="section-line" style="margin-bottom: 1.5rem;"></div>
+      <p style="color: var(--muted); font-size: 0.92rem; margin-bottom: 1.75rem;">This project was collaboratively developed and completed by the following team members from the Digital Business Management programme.</p>
+      <div class="grid-3">
+        <div class="achievement-card" style="border-color: rgba(26,86,219,0.4); position: relative; overflow: hidden;">
+          <div style="position:absolute; top:0; left:0; right:0; height:3px; background: linear-gradient(90deg, var(--blue), var(--cyan));"></div>
+          <div style="width:60px; height:60px; border-radius:50%; background: linear-gradient(135deg, var(--blue), var(--cyan)); display:flex; align-items:center; justify-content:center; font-family:var(--ff-head); font-size:1.6rem; font-weight:700; color:#fff; margin:0 auto 1rem; border:2px solid var(--border);">Y</div>
+          <h3 style="font-family: var(--ff-head); font-size: 1.2rem; margin-bottom: 0.25rem; color: var(--white);">Chavan Yash</h3>
+          <p style="font-family: var(--ff-mono); font-size: 0.68rem; color: var(--cyan); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem;">Roll No. 7 · 2026 Batch</p>
+          <p style="font-size: 0.82rem; color: var(--muted);">RTL Design · FPGA Synthesis · Algorithm Implementation</p>
+        </div>
+        <div class="achievement-card" style="border-color: rgba(26,86,219,0.4); position: relative; overflow: hidden;">
+          <div style="position:absolute; top:0; left:0; right:0; height:3px; background: linear-gradient(90deg, var(--blue), var(--cyan));"></div>
+          <div style="width:60px; height:60px; border-radius:50%; background: linear-gradient(135deg, var(--blue), var(--cyan)); display:flex; align-items:center; justify-content:center; font-family:var(--ff-head); font-size:1.6rem; font-weight:700; color:#fff; margin:0 auto 1rem; border:2px solid var(--border);">S</div>
+          <h3 style="font-family: var(--ff-head); font-size: 1.2rem; margin-bottom: 0.25rem; color: var(--white);">Dhurjad Shradha</h3>
+          <p style="font-family: var(--ff-mono); font-size: 0.68rem; color: var(--cyan); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem;">Roll No. 11 · 2026 Batch</p>
+          <p style="font-size: 0.82rem; color: var(--muted);">Simulation &amp; Verification · BER Analysis · Documentation</p>
+        </div>
+        <div class="achievement-card" style="border-color: rgba(26,86,219,0.4); position: relative; overflow: hidden;">
+          <div style="position:absolute; top:0; left:0; right:0; height:3px; background: linear-gradient(90deg, var(--blue), var(--cyan));"></div>
+          <div style="width:60px; height:60px; border-radius:50%; background: linear-gradient(135deg, var(--blue), var(--cyan)); display:flex; align-items:center; justify-content:center; font-family:var(--ff-head); font-size:1.6rem; font-weight:700; color:#fff; margin:0 auto 1rem; border:2px solid var(--border);">K</div>
+          <h3 style="font-family: var(--ff-head); font-size: 1.2rem; margin-bottom: 0.25rem; color: var(--white);">Gadhari Kirtesh</h3>
+          <p style="font-family: var(--ff-mono); font-size: 0.68rem; color: var(--cyan); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem;">Roll No. 12 · 2026 Batch</p>
+          <p style="font-size: 0.82rem; color: var(--muted);">Power Analysis · Hardware Testing · Presentation</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Certificates -->
+    <div style="margin-top: 3rem;">
+      <h3 style="font-family: var(--ff-head); font-size: 1.5rem; margin-bottom: 0.5rem;">Certificates</h3>
+      <div class="section-line" style="margin-bottom: 1.5rem;"></div>
+      <p style="color: var(--muted); font-size: 0.92rem; margin-bottom: 1.75rem;">Official certificates awarded to the team members in recognition of the successful completion of this project.</p>
+      <div class="grid-3">
+
+        <!-- Certificate 1 – Chavan Yash -->
+        <div class="card" style="border-color: rgba(212,168,67,0.35); padding: 0; overflow: hidden; cursor: pointer;" onclick="openCert('images/cert1')">
+          <div style="background: rgba(212,168,67,0.06); border-bottom: 1px solid rgba(212,168,67,0.2); padding: 0.6rem 1rem; display:flex; align-items:center; gap:0.6rem;">
+            <span style="font-size:1.1rem;">🏅</span>
+            <span style="font-family: var(--ff-mono); font-size: 0.65rem; color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase;">Certificate of Completion</span>
+          </div>
+          <div style="overflow:hidden; height:200px; background: rgba(26,86,219,0.05); display:flex; align-items:center; justify-content:center;">
+            <img src="images/cert1.jpeg" alt="Certificate – Chavan Yash" style="width:100%; height:100%; object-fit:cover; transition: transform 0.4s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+          </div>
+          <div style="padding: 1.25rem;">
+            <h3 style="font-family: var(--ff-head); font-size: 1.1rem; margin-bottom: 0.2rem;">Chavan Yash</h3>
+            <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 0.75rem;">Roll No. 7 · Digital Business Management · 2026</p>
+            <span style="font-family: var(--ff-mono); font-size: 0.68rem; color: var(--gold); border: 1px solid rgba(212,168,67,0.3); padding: 3px 10px; border-radius: 2px;">Click to view full certificate</span>
+          </div>
+        </div>
+
+        <!-- Certificate 2 – Dhurjad Shradha -->
+        <div class="card" style="border-color: rgba(212,168,67,0.35); padding: 0; overflow: hidden; cursor: pointer;" onclick="openCert('images/cert2')">
+          <div style="background: rgba(212,168,67,0.06); border-bottom: 1px solid rgba(212,168,67,0.2); padding: 0.6rem 1rem; display:flex; align-items:center; gap:0.6rem;">
+            <span style="font-size:1.1rem;">🏅</span>
+            <span style="font-family: var(--ff-mono); font-size: 0.65rem; color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase;">Certificate of Completion</span>
+          </div>
+          <div style="overflow:hidden; height:200px; background: rgba(26,86,219,0.05); display:flex; align-items:center; justify-content:center;">
+            <img src="images/cert2.jpeg" alt="Certificate – Dhurjad Shradha" style="width:100%; height:100%; object-fit:cover; transition: transform 0.4s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+          </div>
+          <div style="padding: 1.25rem;">
+            <h3 style="font-family: var(--ff-head); font-size: 1.1rem; margin-bottom: 0.2rem;">Dhurjad Shradha</h3>
+            <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 0.75rem;">Roll No. 11 · Digital Business Management · 2026</p>
+            <span style="font-family: var(--ff-mono); font-size: 0.68rem; color: var(--gold); border: 1px solid rgba(212,168,67,0.3); padding: 3px 10px; border-radius: 2px;">Click to view full certificate</span>
+          </div>
+        </div>
+
+        <!-- Certificate 3 – Gadhari Kirtesh -->
+        <div class="card" style="border-color: rgba(212,168,67,0.35); padding: 0; overflow: hidden; cursor: pointer;" onclick="openCert('images/cert3')">
+          <div style="background: rgba(212,168,67,0.06); border-bottom: 1px solid rgba(212,168,67,0.2); padding: 0.6rem 1rem; display:flex; align-items:center; gap:0.6rem;">
+            <span style="font-size:1.1rem;">🏅</span>
+            <span style="font-family: var(--ff-mono); font-size: 0.65rem; color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase;">Certificate of Completion</span>
+          </div>
+          <div style="overflow:hidden; height:200px; background: rgba(26,86,219,0.05); display:flex; align-items:center; justify-content:center;">
+            <img src="images/cert3.jpeg" alt="Certificate – Gadhari Kirtesh" style="width:100%; height:100%; object-fit:cover; transition: transform 0.4s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+          </div>
+          <div style="padding: 1.25rem;">
+            <h3 style="font-family: var(--ff-head); font-size: 1.1rem; margin-bottom: 0.2rem;">Gadhari Kirtesh</h3>
+            <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 0.75rem;">Roll No. 12 · Digital Business Management · 2026</p>
+            <span style="font-family: var(--ff-mono); font-size: 0.68rem; color: var(--gold); border: 1px solid rgba(212,168,67,0.3); padding: 3px 10px; border-radius: 2px;">Click to view full certificate</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Lightbox overlay for full-size certificate view -->
+    <div id="certLightbox" onclick="closeCert()" style="display:none; position:fixed; inset:0; z-index:999; background:rgba(6,13,31,0.93); backdrop-filter:blur(8px); align-items:center; justify-content:center; cursor:zoom-out;">
+      <div style="position:relative; max-width:90vw; max-height:90vh;">
+        <img id="certLightboxImg" src="" alt="Certificate" style="max-width:90vw; max-height:85vh; object-fit:contain; border-radius:8px; border:1px solid var(--border); box-shadow:0 24px 80px rgba(0,0,0,0.6);">
+        <button onclick="closeCert()" style="position:absolute; top:-14px; right:-14px; width:32px; height:32px; border-radius:50%; background:var(--blue); border:none; color:#fff; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(26,86,219,0.5);">✕</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+  <section id="scope">
+    <div class="reveal">
+      <p class="section-tag">08 · Future Scope</p>
+      <h2 class="section-title">Future Directions</h2>
+      <div class="section-line"></div>
+      <p class="section-intro">Potential extensions and research directions that build on this project's foundation.</p>
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="scope-item"><div class="scope-num">01</div><div class="scope-content"><h3>5G NR LDPC Code Integration</h3><p>Extend the decoder to support 5G New Radio LDPC codes (base graph BG1 / BG2), enabling deployment in real 5G baseband processing systems with scalable lifting factors.</p></div></div>
+        <div class="scope-item"><div class="scope-num">02</div><div class="scope-content"><h3>ASIC Tapeout &amp; Silicon Validation</h3><p>Port the verified RTL to a standard-cell ASIC design flow (TSMC 28 nm / 65 nm) for further power optimization through voltage scaling, standard-cell library selection, and layout.</p></div></div>
+        <div class="scope-item"><div class="scope-num">03</div><div class="scope-content"><h3>Machine-Learning-Aided Decoding</h3><p>Investigate neural network augmentation of the Min-Sum check-node updates (Neural Offset MS), using learned offset factors to improve BER performance at low SNR.</p></div></div>
+        <div class="scope-item"><div class="scope-num">04</div><div class="scope-content"><h3>Multi-Rate / Multi-Length Decoder</h3><p>Design a reconfigurable decoder capable of switching between multiple LDPC code rates and block lengths at runtime, supporting adaptive modulation and coding (AMC) schemes.</p></div></div>
+        <div class="scope-item"><div class="scope-num">05</div><div class="scope-content"><h3>Integration with Full Baseband Chain</h3><p>Couple the LDPC decoder with a complete digital baseband receiver — including FFT, channel estimation, and QAM demapper — on a single FPGA platform for end-to-end evaluation.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="team">
+    <div class="reveal">
+      <p class="section-tag">09 · Team Details</p>
+      <h2 class="section-title">Meet the Team</h2>
+      <div class="section-line"></div>
+      <p class="section-intro">A group of three students from the Digital Business Management programme.</p>
+      <div class="team-grid">
+        <div class="team-card">
+          <div class="team-avatar">Y</div>
+          <h3>Chavan Yash</h3>
+          <p class="team-id">Roll No. 7 · 2026 Batch</p>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar">S</div>
+          <h3>Dhurjad Shradha</h3>
+          <p class="team-id">Roll No. 11 · 2026 Batch</p>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar">K</div>
+          <h3>Gadhari Kirtesh</h3>
+          <p class="team-id">Roll No. 12 · 2026 Batch</p>
+        </div>
+      </div>
+      <div style="margin-top: 2rem; display: flex; justify-content: center;">
+        <div class="team-card guide-card" style="max-width: 300px;">
+          <div class="guide-label">Project Guide</div>
+          <div class="team-avatar" style="background: linear-gradient(135deg, var(--gold), #f59e0b);">G</div>
+          <h3>Prof. Mrs. H.H. Kulkarni</h3>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="references">
+    <div class="reveal">
+      <p class="section-tag">10 · References</p>
+      <h2 class="section-title">References</h2>
+      <div class="section-line"></div>
+      <ul class="ref-list">
+        <li class="ref-item"><span class="ref-num">[1]</span><div>R. G. Gallager, <span>"Low-density parity-check codes,"</span> IRE Transactions on Information Theory, vol. 8, no. 1, pp. 21–28, 1962.</div></li>
+        <li class="ref-item"><span class="ref-num">[2]</span><div>D. J. C. MacKay and R. M. Neal, <span>"Near Shannon limit performance of low density parity check codes,"</span> Electronics Letters, vol. 32, no. 18, pp. 1645–1646, 1996.</div></li>
+        <li class="ref-item"><span class="ref-num">[3]</span><div>J. Chen et al., <span>"Reduced-complexity decoding of LDPC codes,"</span> IEEE Transactions on Communications, vol. 53, no. 8, pp. 1288–1299, 2005.</div></li>
+        <li class="ref-item"><span class="ref-num">[4]</span><div>T. Brack et al., <span>"A low complexity LDPC code decoder architecture suitable for next-generation WLAN,"</span> in Proc. GLOBECOM, 2006.</div></li>
+        <li class="ref-item"><span class="ref-num">[5]</span><div>IEEE Standard 802.11n-2009, <span>"Wireless LAN MAC and PHY Specifications."</span></div></li>
+        <li class="ref-item"><span class="ref-num">[6]</span><div>M. M. Mansour and N. R. Shanbhag, <span>"High-throughput LDPC decoders,"</span> IEEE Transactions on VLSI Systems, vol. 11, no. 6, pp. 976–996, 2003.</div></li>
+        <li class="ref-item"><span class="ref-num">[7]</span><div>Xilinx Inc., <span>Vivado Design Suite User Guide: Power Analysis and Optimization,</span> UG907, 2023.</div></li>
+        <li class="ref-item"><span class="ref-num">[8]</span><div>3GPP TS 38.212, <span>"NR; Multiplexing and channel coding,"</span> Release 16, 2020.</div></li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-brand">LDPC · FPGA · 2026 · Digital Business Management</div>
+    <div class="footer-mark">
+      Academic Portfolio · Term Project · Submitted April 2026<br />
+      <span style="font-family: var(--ff-mono); font-size: 0.68rem;">All content for academic use only.</span>
+    </div>
+  </footer>
+
+  <script>
+    const navLinks = document.getElementById('navLinks');
+    const hamburger = document.getElementById('hamburger');
+
+    function toggleNav() {
+      navLinks.classList.toggle('open');
+      hamburger.classList.toggle('active');
+    }
+
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+        hamburger.classList.remove('active');
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('nav')) {
+        navLinks.classList.remove('open');
+        hamburger.classList.remove('active');
+      }
+    });
+
+    const revealEls = document.querySelectorAll('.reveal');
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            observer.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.08 });
+      revealEls.forEach(el => observer.observe(el));
+    } else {
+      revealEls.forEach(el => el.classList.add('visible'));
+    }
+    // Show any reveals already in viewport on load
+    setTimeout(() => {
+      revealEls.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight) el.classList.add('visible');
+      });
+    }, 100);
+
+    function openCert(src) {
+      const lb = document.getElementById('certLightbox');
+      document.getElementById('certLightboxImg').src = src;
+      lb.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+    function closeCert() {
+      document.getElementById('certLightbox').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCert(); });
+
+    const sections = document.querySelectorAll('section[id]');
+    const navAnchors = document.querySelectorAll('.nav-links a');
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(s => {
+        if (window.scrollY >= s.offsetTop - 80) current = s.id;
+      });
+      navAnchors.forEach(a => {
+        const isActive = a.getAttribute('href') === '#' + current;
+        a.style.color = isActive ? 'var(--white)' : '';
+        a.style.borderBottom = isActive ? '1px solid var(--cyan)' : '';
+      });
+    });
+  </script>
+</body>
+</html>
